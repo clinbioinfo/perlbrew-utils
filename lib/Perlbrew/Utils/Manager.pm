@@ -151,6 +151,7 @@ sub _display_options {
     'Venv - List all virtual environments',
     'Venv - Use a virtual environment',
     'Venv - Create a new virtual environment',
+    'Venv - Remove a virtual environment',
     'Venv - List all modules installed in a virtual environment',
     'Venv - Generate modules list file for a virtual environment',
     'Quit'
@@ -227,6 +228,10 @@ sub _display_options {
     elsif ($val eq 'Venv - Generate modules list file for a virtual environment'){
         $self->_generate_modules_list_file_for_virtual_environment();
     }
+    elsif ($val eq 'Venv - Remove a virtual environment'){
+        $self->_remove_virtual_environment();
+    }
+
     else {
         $self->{_logger}->logconfess("Unexpected option '$val'");
     }
@@ -575,6 +580,65 @@ sub _write_modules_list_to_file {
     printBrightBlue("Wrote modules list to file '$outfile'\n");
 
     $self->{_logger}->info("Wrote records to '$outfile'");
+}
+
+sub _remove_virtual_environment {
+
+    my $self = shift;
+
+    my $cmd = 'perlbrew lib list';
+
+    my $results = $self->_execute_cmd($cmd);
+
+    printBrightBlue("Print here are your virtual environments:\n");
+
+
+    my $option_lookup = {};
+
+    my $option_ctr = 0;
+
+    foreach my $version (@{$results}){
+
+        $option_ctr++;
+
+        print $option_ctr . '. ' . $version . "\n";
+
+        $option_lookup->{$option_ctr} = $version;
+    }
+
+    my $try_ctr = 0;
+
+    my $answer;
+
+    while (1){
+
+        print "\nWhich one do you want to remove dawg? ";
+
+        $answer = <STDIN>;
+
+        chomp $answer;
+
+        if (exists $option_lookup->{$answer}){
+            last;
+        }
+
+        $try_ctr++;
+
+        if ($try_ctr > 3){
+
+            printBoldRed("Seriously?");
+
+            exit(1);
+        }
+    }
+
+    my $val = $option_lookup->{$answer};
+    
+    print "Use it by typing the following:\n";
+
+    print "perlbrew lib delete $val\n";
+
+    exit(0);
 }
 
 sub _generate_modules_list_file_for_virtual_environment {
