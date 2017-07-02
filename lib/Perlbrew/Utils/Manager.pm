@@ -544,13 +544,37 @@ sub _list_all_modules_installed_in_virtual_environment {
 
     # print $cmd2 . "\n";
 
-    my $results = $self->_execute_cmd($cmd2);
+    my $modules_list = $self->_execute_cmd($cmd2);
 
     printBrightBlue("\nHere are the modules installed in virtual environment $val:\n");
 
-    print join("\n", @{$results}) . "\n";
+    print join("\n", @{$modules_list}) . "\n";
+
+    $self->_write_modules_list_to_file($val, $modules_list);
 
     $self->_display_options();
+}
+
+sub _write_modules_list_to_file {
+
+    my $self = shift;
+    my ($name, $modules_list) = @_;
+
+    $name =~ s|\s+||;  ## remove all whitespaces
+
+    my $outdir = File::Spec->rel2abs(cwd());
+    
+    my $outfile = $outdir . '/' . $name . '-installed-modules-list.txt';
+    
+    open (OUTFILE, ">$outfile") || $self->{_logger}->logconfess("Could not open '$outfile' in write mode : $!");
+
+    print OUTFILE join("\n", @{$modules_list}) . "\n";
+
+    close OUTFILE;
+
+    printBrightBlue("Wrote modules list to file '$outfile'\n");
+
+    $self->{_logger}->info("Wrote records to '$outfile'");
 }
 
 sub _generate_modules_list_file_for_virtual_environment {
