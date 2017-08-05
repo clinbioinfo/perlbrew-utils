@@ -707,6 +707,103 @@ sub _execute_cmd {
     return \@results;
 }    
 
+sub installModulesFromListFile {
+
+    my $self = shift;
+    my ($infile, $venv) = @_;
+
+    if (!defined($infile)){
+        $self->{_logger}->logconfess("infile was not defined");
+    }
+
+    if (!defined($venv)){
+        $self->{_logger}->logconfess("venv was not defined");
+    }
+
+    $self->_checkInfileStatus($infile);
+
+
+    my @contents = read_file($infile);
+
+    my $line_ctr = 0;
+
+    foreach my $line (@contents){
+
+        chomp $line;
+
+        if ($line =~ m|^\#|){
+            next;  ## skip commented lines
+        }
+
+        if ($line =~ m|^\s*$|){
+            next;  ## skip blank lines
+        }
+
+        $line_ctr++;
+
+        $line =~ s|^\s+||;
+
+        $line =~ s|\s+$||;
+
+        $self->{_logger}->info("Will attempt to install $line");
+
+        my $cmd = "perlbrew exec --with $venv cpanm $line";
+
+        my $content = $self->_execute_cmd($cmd);
+
+        $self->{_logger}->info("cpanm install attempt results : " . join("\n", @{$content}));
+    }
+
+    $self->{_logger}->info("Processed '$line_ctr' lines in file $infile");
+}
+
+sub _checkInfileStatus {
+
+    my $self = shift;
+    my ($infile) = @_;
+
+    if (!defined($infile)){
+        $self->{_logger}->logconfess("infile was not defined");
+    }
+
+    my $errorCtr = 0 ;
+
+    if (!-e $infile){
+        
+        $self->{_logger}->error("input file '$infile' does not exist");
+        
+        $errorCtr++;
+    }
+    else {
+
+        if (!-f $infile){
+            
+            $self->{_logger}->error("'$infile' is not a regular file");
+            
+            $errorCtr++;
+        }
+
+        if (!-r $infile){
+            
+            $self->{_logger}->error("input file '$infile' does not have read permissions");
+            
+            $errorCtr++;
+        }
+        
+        if (!-s $infile){
+            
+            $self->{_logger}->error("input file '$infile' does not have any content");
+            
+            $errorCtr++;
+        }
+    }
+     
+    if ($errorCtr > 0){
+        
+        $self->{_logger}->logconfess("Encountered issues with input file '$infile'");        
+    }
+}
+
 
 no Moose;
 __PACKAGE__->meta->make_immutable;

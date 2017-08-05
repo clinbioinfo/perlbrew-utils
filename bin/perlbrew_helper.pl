@@ -52,7 +52,9 @@ my (
     $man, 
     $verbose,
     $admin_email_address,
-    $test_mode
+    $test_mode,
+    $modules_list_file,
+    $venv
     );
 
 my $results = GetOptions (
@@ -65,6 +67,8 @@ my $results = GetOptions (
     'outdir=s'                       => \$outdir,
     'admin_email_address=s'          => \$admin_email_address,
     'test_mode=s'                    => \$test_mode,
+    'modules_list_file=s'            => \$modules_list_file,
+    'venv=s'                         => \$venv,
     );
 
 &checkCommandLineArguments();
@@ -94,7 +98,17 @@ if (!defined($manager)){
     $logger->logdie("Could not instantiate Perlbrew::Utils::Manager");
 }
 
-$manager->run();
+if (defined($modules_list_file)){
+    
+    if (!defined($venv)){
+        $logger->logconfess("venv was not defined");
+    }
+
+    $manager->installModulesFromListFile($modules_list_file, $venv);
+}
+else { 
+    $manager->run();
+}
 
 printGreen(File::Spec->rel2abs($0) . " execution completed\n");
 
