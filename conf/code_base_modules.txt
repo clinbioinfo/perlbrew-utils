@@ -1,0 +1,4 @@
+Log::Log4perl
+Moose
+Config::IniFiles
+File::Slurp
